@@ -69,6 +69,14 @@ myDB.getDoc("Document_key").then((data)=>{
   // logs {"hello":"world"}
 })
 ```
+### Delete a Document
+
+```js
+myDB.deleteDoc(<doc_id>).then((data)=>{
+  // data returns deleted content
+  
+})
+```
 
 ### Getting the entire DB conetent
 

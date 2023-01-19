@@ -46,10 +46,17 @@ class Database{
         data = JSON.parse(data);
         data[id] = obj;
         data = JSON.stringify(data);
-        fs.writeFile(this.path,enc(data),(err)=>{
-          r(obj)
-          if(err) throw err;
-        })
+        if(this.encrypt){
+          fs.writeFile(this.path,enc(data),(err)=>{
+            r(obj)
+            if(err) throw err;
+          })
+        }else{
+          fs.writeFile(this.path,data,(err)=>{
+            r(obj)
+            if(err) throw err;
+          })
+        }
       })
     })
     
@@ -59,8 +66,15 @@ class Database{
       fs.readFile(this.path,'utf-8',(err,data)=>{
         if(err) throw err;
         if(this.encrypt){
-          data = 
+          data = dec(data);
         }
+        data = JSON.parse(data);
+        var tempData = data[id];
+        delete data[id];
+        fs.writeFile(this.path,enc(data),(err)=>{
+          r(tempData);
+          if(err) throw err;
+        })
       })
     })
   }

@@ -1,6 +1,6 @@
 {
   "name": "@sojs_coder/sodb",
-  "version": "1.1.1",
+  "version": "1.2.1",
   "description": "A file system database with encryption support.",
   "main": "index.js",
   "scripts": {
@@ -14,5 +14,13 @@
     "crypto-js": "^4.1.1",
     "node-fetch": "^3.2.6"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sojs-coder/SoDB.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sojs-coder/SoDB/issues"
+  },
+  "homepage": "https://github.com/sojs-coder/SoDB#readme"
 }
