@@ -73,7 +73,7 @@ class Database{
         data = JSON.parse(data);
         var tempData = data[id];
         delete data[id];
-        if(this.encrpyt){
+        if(this.encrypt){
           fs.writeFile(this.path,enc(data),(err)=>{
             if(err) throw err;
             r(tempData);
