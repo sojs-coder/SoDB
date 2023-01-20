@@ -48,13 +48,15 @@ class Database{
         data = JSON.stringify(data);
         if(this.encrypt){
           fs.writeFile(this.path,enc(data),(err)=>{
-            r(obj)
             if(err) throw err;
+            r(obj)
+            
           })
         }else{
           fs.writeFile(this.path,data,(err)=>{
-            r(obj)
             if(err) throw err;
+            r(obj)
+            
           })
         }
       })
@@ -71,10 +73,19 @@ class Database{
         data = JSON.parse(data);
         var tempData = data[id];
         delete data[id];
-        fs.writeFile(this.path,enc(data),(err)=>{
-          r(tempData);
-          if(err) throw err;
-        })
+        if(this.encrpyt){
+          fs.writeFile(this.path,enc(data),(err)=>{
+            if(err) throw err;
+            r(tempData);
+            
+          })
+        }else{
+          fs.writeFile(this.path,data,(err)=>{
+            if(err) throw err;
+            r(tempData);
+            
+          })
+        }
       })
     })
   }
@@ -104,7 +115,6 @@ class Database{
     })
   }
 }
-
 
 module.exports = {
   Database,
