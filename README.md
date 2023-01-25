@@ -21,7 +21,9 @@ The JSON would look like the following:
 ```
 
 ## Docs:
-### Install
+
+## Installation
+
 ```
 npm install @sojs_coder/sodb
 ```
@@ -29,64 +31,68 @@ npm install @sojs_coder/sodb
 const so_db = require("@sojs_coder/sodb");
 ```
 
-### Create Database
-
-The very first step is to initialize your database. 
-
-The following line will create a table.
+## Usage
 
 ```js
-const myDB = new so_db.Database("Table Name");
+const {Database} = require('@sojs_coder/sodb');
+
+// Create a new database
+const myDB = new Database('myTable', true);
+
+// Add a new document
+myDB.addDoc('document1', {property1: 'value1', property2: 'value2'})
+    .then((document) => console.log(document))
+    .catch((err) => console.error(err));
+
+// Update an existing document
+myDB.updateDoc('document1', {property1: 'newValue1'})
+    .then(() => console.log('Document updated'))
+    .catch((err) => console.error(err));
+
+// Get a document
+myDB.getDoc('document1')
+    .then((document) => console.log(document))
+    .catch((err) => console.error(err));
+
+// Delete a document
+myDB.deleteDoc('document1')
+    .then(() => console.log('Document deleted'))
+    .catch((err) => console.error(err));
+
+// Dump all documents
+myDB.dump()
+    .then((documents) => console.log(documents))
+    .catch((err) => console.error(err));
 ```
 
-If you want to use encryption on your table, set the second parameter to `true` and initialize it.
+# Class `Database`
+## new Database(table_name, encrypt = false)
 
-To use encyption, also create an enviroment variable called `SO_DB_KEY` and set it to a private encyption key. Use this if you ever want to decrypt the JSON file. (It is an AES algorithm)
+Creates a new Database instance.
 
+- `table_name`: the name of the table for the database. This will be used as the name of the directory in which the documents will be stored.
+- `encrypt`: a boolean value indicating whether the documents should be encrypted or not. If set to true, the documents will be encrypted using AES encryption with a key specified in the `SO_DB_KEY` environment variable.
 
-```js
-const myDB = new so_db.Database("Table Name", true);
-```
+## addDoc(id, obj)
 
-**Remember- only run the `__initCrypto` function once, when you first create the database**
-*`__initCrypto()` is now depacated*
+Adds a new document to the database.
 
-### Adding/Updating a document
+- `id`: the unique identifier for the document to be updated.
+- `obj`: the updated content of the document, in the form of a JavaScript object.
 
-The following code will give a document with a key of `Document_key` an attribute of `hello` and a value of `world`
-```js
-myDB.addDoc("Document_key",{
-  "hello":"world" //just standard JSON data
-});
-```
-This also works to update a document.
+## updateDoc(id, obj)
 
-### Getting a Document's Content
+Updates an existing document in the database.
 
-```js
-myDB.getDoc("Document_key").then((data)=>{
-  console.log(data);
-  // logs {"hello":"world"}
-})
-```
-### Delete a Document
+- `id`: the unique identifier for the document to be updated.
+- `obj`: the updated content of the document, in the form of a JavaScript object.
 
-```js
-myDB.deleteDoc(<doc_id>).then((data)=>{
-  // data returns deleted content
-  
-})
-```
+## deleteDoc(id)
 
-### Getting the entire DB conetent
+Deletes a document from the database.
 
-```js
-myDB.dump().then((data)=>{
-  console.log(data);
-  //logs { 
-  //  "Document_key": { 
-  //    "hello":"world" 
-  //  }
-  //}
-})
-```
+- `id`: the unique identifier for the document to be deleted.
+
+## dump()
+
+- Retrieves all documents from the database.
