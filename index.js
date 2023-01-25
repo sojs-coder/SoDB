@@ -76,21 +76,25 @@ class Database {
         if (err) {
           reject(err);
         } else {
+          let promises = [];
           files.forEach((file) => {
             if (file.endsWith('.json')) {
               let id = file.slice(0, -5);
-              this.getDoc(id).then((data) => {
+              promises.push(this.getDoc(id).then((data) => {
                 documents[id] = data;
-              }).catch((err) => {
-                reject(err);
-              });
+              }));
             }
           });
-          resolve(documents);
+          Promise.all(promises).then(() => {
+            resolve(documents);
+          }).catch((err) => {
+            reject(err);
+          });
         }
       });
     });
   }
+
 }
 
 module.exports = {
