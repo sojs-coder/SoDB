@@ -21,6 +21,9 @@ class Database {
     if (!fs.existsSync(this.dir)) {
       fs.mkdirSync(this.dir);
     }
+    if(this.encrypt && !process.env.SO_DB_KEY){
+      reject(new Error('SO_DB_KEY is not defined'));
+    }
   }
 
   addDoc(id, obj) {
@@ -57,6 +60,9 @@ class Database {
     return new Promise((resolve, reject) => {
       let file = path.join(this.dir, id + '.json');
       fs.readFile(file, 'utf-8', (err, data) => {
+        if (!data) {
+          reject(new Error('File is empty'));
+        }
         if (err) {
           reject(err);
         } else {
@@ -64,6 +70,7 @@ class Database {
             data = dec(data);
           }
           data = JSON.parse(data);
+          
           resolve(data);
         }
       });
