@@ -1,6 +1,6 @@
 {
   "name": "@sojs_coder/sodb",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "A file system database with encryption support.",
   "main": "index.js",
   "scripts": {
