@@ -42,6 +42,33 @@ class Database {
       });
     });
   }
+  updateDoc(id, obj) {
+    return new Promise((resolve, reject) => {
+        let file = path.join(this.dir, id + '.json');
+        fs.readFile(file, 'utf-8', (err, data) => {
+            if (err) {
+                reject(err);
+            } else {
+                if (this.encrypt) {
+                    data = dec(data);
+                }
+                data = JSON.parse(data);
+                Object.assign(data, obj);
+                data = JSON.stringify(data);
+                if (this.encrypt) {
+                    data = enc(data);
+                }
+                fs.writeFile(file, data, (err) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve();
+                    }
+                });
+            }
+        });
+    });
+}
 
   deleteDoc(id) {
     return new Promise((resolve, reject) => {
