@@ -1,24 +1,13 @@
 # SoDB
-A part of the So Ecosystem.
 
-The worlds simplest filesystem database with support for data encryption.
+Support for database encryption and automatic compression.
+The most cost effective database solution. 
+Free to use, and simple to set up.
 
-SoDB uses a document based system.
-Each database or `table` can store infite `documents`
+Data is stored as `documents`. Documents are sets of attributes linked under one `key`.
+Documents are stored in individual JSON files for maximum read speeds.
 
-`Documents` are just sets of attributes linked to one key.
-
-For example, a key of `post_1` could reference a document that has a couple attributes, such as `timestamp`, or `author`.
-
-The JSON would look like the following:
-```json
-"post_1": {
-  "timestamp":986754153,
-  "author":"SoJS",
-  "content":"A test document",
-  etc...
-}
-```
+After a set time of no interaction with a document, it is compressed for more efficient storage. Once it is read or edited again, the timer resets.
 
 ## Docs:
 
@@ -34,10 +23,12 @@ const so_db = require("@sojs_coder/sodb");
 ## Usage
 
 ```js
-const {Database} = require('@sojs_coder/sodb');
+const { Database } = require('@sojs_coder/sodb');
 
 // Create a new database
-const myDB = new Database('myTable', true);
+const myDB = new Database('myTable',{
+  encrypt: true
+});
 
 // Add a new document
 myDB.addDoc('document1', {property1: 'value1', property2: 'value2'})
@@ -66,12 +57,15 @@ myDB.dump()
 ```
 
 # Class `Database`
-## new Database(table_name, encrypt = false)
+## new Database(table_name, options)
 
 Creates a new Database instance.
 
 - `table_name`: the name of the table for the database. This will be used as the name of the directory in which the documents will be stored.
-- `encrypt`: a boolean value indicating whether the documents should be encrypted or not. If set to true, the documents will be encrypted using AES encryption with a key specified in the `SO_DB_KEY` environment variable.
+- `options`: JSON object to improve database performance and optimize for your use case.
+  - `encrypt`: defualt `false`. If true, data in the data base will be encypted using AES encrytion. Set an enviroment variable called `SO_DB_KEY` for this to work (do not share this with anyone, it will allow them to decrypt your database)
+  - `timeToCompress`: defualt `24`. The quantity of time (in hours) that an untouched document takes to compress. A document is considered touched when it is created, modified, or read from.
+
 
 ## addDoc(id, obj)
 
