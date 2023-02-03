@@ -14,7 +14,7 @@ class Database {
 		this.table_name = table_name;
 		this.dir = './SoDB/' + this.table_name;
 		this.encrypt = options.encrypt || false;
-    this.timeToCompress = options.timeToCompress * 60 * 60 * 1000 || 24;
+    this.timeToCompress = options.timeToCompress * 60 * 60 * 1000 || 24 * 60 * 60 *1000;
     this.logs = options.logs || true
 		if (!fs.existsSync('./SoDB')) {
 			fs.mkdirSync('./SoDB');
@@ -25,11 +25,89 @@ class Database {
 		if (this.encrypt && !process.env.SO_DB_KEY) {
 			throw new Error('SO_DB_KEY is not defined');
 		}
-
+    
 		setInterval(() => {
 			this.checkForCompression();
 		}, this.timeToCompress);
 	}
+  encryptDocs(){
+    return new Promise((resolve,reject)=>{
+      fs.readdir(this.dir, (err,files)=>{
+        if(err){
+          reject(err);
+          return
+        }
+        files.forEach(file =>{
+          const filePath = path.join(this.dir, file);
+          const parsedPath = path.parse(filePath);
+
+          const fileName = parsedPath.name;    
+          this.isCompressed(fileName).then(iscomp=>{
+            if(iscomp){
+              this.decompressDoc(fileName).then(data=>{
+                if(typeof data !== "string"){
+                  data = JSON.stringify(data)
+                }
+                data = enc(data);
+                fs.writeFile(filePath,data,(err)=>{
+                  if(err) reject(err)
+                })
+              })
+            }else{
+              fs.readFile(filePath,'utf-8',(err,data)=>{
+                data = enc(data);
+                fs.writeFile(filePath,data,(err)=>{
+                  if(err){
+                    reject(err)
+                  }
+                })
+              })
+            }
+          })
+        });
+        resolve();
+      });
+    })
+  }
+  unencryptDocs(){
+    return new Promise((resolve,reject)=>{
+      fs.readdir(this.dir, (err,files)=>{
+        if(err){
+          reject(err);
+          return
+        }
+        files.forEach(file =>{
+          const filePath = path.join(this.dir, file);
+          const parsedPath = path.parse(filePath);
+
+          const fileName = parsedPath.name;    
+          this.isCompressed(fileName).then(iscomp=>{
+            if(iscomp){
+              this.decompressDoc(fileName).then(data=>{
+                if(typeof data !== "string"){
+                  data = JSON.stringify(data)
+                }
+                data = dec(data);
+                fs.writeFile(filePath,data,(err)=>{
+                  if(err) reject(err)
+                })
+              })
+            }else{
+              fs.readFile(filePath,'utf-8',(err,data)=>{
+                data = dec(data);
+                fs.writeFile(filePath,data,(err)=>{
+                  if(err){
+                    reject(err)
+                  }
+                })
+              })
+            }
+          })
+        });
+        resolve();
+      });
+    })
+  }
   async checkForCompression() {
     try {
       fs.readdir(this.dir, (err, files) => {
@@ -108,10 +186,10 @@ class Database {
     				if (err) {
     					 reject(err)
     				} else {
+              if (this.encrypt) {
+                result = dec(result);
+              }
               this.addDoc(id,JSON.parse(result)).then(()=>{
-                if (this.encrypt) {
-                  result = dec(result);
-                }
                 result = JSON.parse(result);
                 
                 resolve(result);
@@ -136,6 +214,16 @@ class Database {
   }
 	addDoc(id, obj) {
 		return new Promise((resolve, reject) => {
+      this.checkForCompression(id).then(comp=>{
+        if(comp){
+          this.decompressDoc(id).then(data=>{
+            if(typeof data !== "object"){
+              data = JSON.parse(data)
+            }
+            
+          })
+        }
+      })
 			let file = path.join(this.dir, id + '.json');
 			let data = JSON.stringify(obj);
 			if (this.encrypt) {
@@ -262,6 +350,8 @@ class Database {
 					reject(err);
 				} else {
 					let promises = [];
+          
+
 					files.forEach((file) => {
 						if (file.endsWith('.json')) {
 							let id = file.slice(0, -5);
