@@ -49,8 +49,11 @@ class Database {
                   data = JSON.stringify(data)
                 }
                 data = enc(data);
-                fs.writeFile(filePath,data,(err)=>{
-                  if(err) reject(err)
+                zlib.gzip(data,(err,compressed)=>{
+                  if(err) reject(err);
+                  fs.writeFile(filePath,compressed,(err)=>{
+                    if(err) reject(err)
+                  })
                 })
               })
             }else{
