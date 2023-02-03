@@ -90,3 +90,11 @@ Deletes a document from the database.
 ## dump()
 
 - Retrieves all documents from the database.
+
+## encryptDocs
+
+- Encrypts database completely, useful for changing from decrypted database to encrypted
+
+## unencryptDocs
+
+- Completely decrypts database, useful for viewing encrypted data (use at your own risk)
