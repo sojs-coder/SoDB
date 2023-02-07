@@ -11,11 +11,39 @@ const dec = (data) => {
 }
 class Database {
 	constructor(table_name, options = { encrypt: false, timeToCompress: 24,logs:true }) {
+    
 		this.table_name = table_name;
 		this.dir = './SoDB/' + this.table_name;
 		this.encrypt = options.encrypt || false;
     this.timeToCompress = options.timeToCompress * 60 * 60 * 1000 || 24 * 60 * 60 *1000;
-    this.logs = options.logs || true
+    this.logs = options.logs || true;
+    try{
+     var data = fs.readFileSync(path.join(this.dir,".dbdata.sojs"),
+            {encoding:'utf8', flag:'r'});
+    data = data.split("=");
+    var returnData = {
+      unienc: this.encrypt,
+    }
+    data.forEach(line=>{
+      line = line.split(":");
+      returnData[line[0]] = (line[1] === "true") ? true : false
+    });
+      var x = returnData;
+      this.universallyEnc = x.unienc;
+      this.encrypt = x.unienc;
+      if(this.logs){
+        console.log("Found encrpyt settings in .dbdata.sojs, forcing switch to "+((this.encrypt) ? "encrypted" : "unencrypted"));
+        console.log(this.encrypt);
+      }
+    }catch(err){
+      if(err.message.indexOf("no such").indexOf != -1){
+        console.error(err)
+        fs.writeFileSync(path.join(this.dir,".dbdata.sojs"),"=unienc:"+this.encrypt);
+        this.universallyEnc = this.encrypt;
+      }else{
+        console.error(err);
+      }
+    }
 		if (!fs.existsSync('./SoDB')) {
 			fs.mkdirSync('./SoDB');
 		}
@@ -30,14 +58,64 @@ class Database {
 			this.checkForCompression();
 		}, this.timeToCompress);
 	}
-  encryptDocs(){
-    return new Promise((resolve,reject)=>{
+  getConfig(){
+    var data = fs.readFileSync(path.join(this.dir,".dbdata.sojs"),
+            {encoding:'utf8', flag:'r'});
+    data = data.split("=");
+    var returnData = {
+      unienc: this.encrypt,
+    }
+    data.forEach(line=>{
+      line = line.split(":");
+      returnData[line[0]] = (line[1] === "true") ? true : false
+    });
+    return returnData
+  }
+  updateConfig(key,value){
+    var data = fs.readFileSync(path.join(this.dir,".dbdata.sojs"),
+            {encoding:'utf8', flag:'r'});
+    data = data.split("=").map(line=>{
+      line = line.split(":");
+      if(line[0] == key){
+        line[1] = value
+      }
+      return line.join(":")
+    });
+    data = data.map((line,i)=>{
+      if(line.length >= 1){
+      if(i !== 0){
+        return "=" + line
+      }else{
+        return "\n=" + line
+      }
+      }else{
+        return ".delete"
+      }
+    });
+    data = data.filter(line=>{
+      if (line != ".delete"){
+        return true;
+      }else{
+        return false;
+      }
+    })
+    data = data.join("");
+    fs.writeFileSync(path.join(this.dir,".dbdata.sojs"),data);
+  }
+  async encryptDocs(){
+    this.universallyEnc = this.getConfig().unienc
+    if(this.logs){
+      console.log("A lot of errors are going to happen after you run this function. They are easy to fix. Just change the \"encrypt\" option to true so that the database decrypts the files before reading them")
+    }
+    if(this.universallyEnc === false){
+      
       fs.readdir(this.dir, (err,files)=>{
         if(err){
-          reject(err);
+          console.error(err);
           return
         }
         files.forEach(file =>{
+          if (path.extname(file) !== '.json' && path.extname(file) !== '.json.gz' ) return;
           const filePath = path.join(this.dir, file);
           const parsedPath = path.parse(filePath);
 
@@ -50,9 +128,9 @@ class Database {
                 }
                 data = enc(data);
                 zlib.gzip(data,(err,compressed)=>{
-                  if(err) reject(err);
+                  if(err) console.error(err);
                   fs.writeFile(filePath,compressed,(err)=>{
-                    if(err) reject(err)
+                    if(err) console.error(err);
                   })
                 })
               })
@@ -61,25 +139,35 @@ class Database {
                 data = enc(data);
                 fs.writeFile(filePath,data,(err)=>{
                   if(err){
-                    reject(err)
+                    console.error(err)
                   }
                 })
               })
             }
-          })
+          });
         });
-        resolve();
       });
-    })
+      this.universallyEnc = true;
+      this.updateConfig("unienc",true)
+    }else{
+      if(this.logs){
+        console.log("Documents are already encrypted")
+      }
+    }
   }
-  unencryptDocs(){
-    return new Promise((resolve,reject)=>{
+  async unencryptDocs(){
+    this.universallyEnc = this.getConfig().unienc
+    if(this.logs){
+      console.log("A lot of errors are going to follow running this function. These can be fixed by changing the \" encrypt\" option to false, so that the database doesnt try to decrypt unencrypted data.");
+    }
+     if(this.universallyEnc){
       fs.readdir(this.dir, (err,files)=>{
         if(err){
-          reject(err);
+          console.error(err);
           return
         }
         files.forEach(file =>{
+          if (path.extname(file) !== '.json' && path.extname(file) !== '.json.gz' ) return;
           const filePath = path.join(this.dir, file);
           const parsedPath = path.parse(filePath);
 
@@ -91,8 +179,11 @@ class Database {
                   data = JSON.stringify(data)
                 }
                 data = dec(data);
-                fs.writeFile(filePath,data,(err)=>{
-                  if(err) reject(err)
+                zlib.gzip(data,(err,compressed)=>{
+                  if(err) console.error(err);
+                  fs.writeFile(filePath,compressed,(err)=>{
+                    if(err) console.error(err)
+                  })
                 })
               })
             }else{
@@ -100,16 +191,22 @@ class Database {
                 data = dec(data);
                 fs.writeFile(filePath,data,(err)=>{
                   if(err){
-                    reject(err)
+                    console.error(err)
                   }
+                  
                 })
               })
             }
-          })
+          });
         });
-        resolve();
       });
-    })
+      this.universallyEnc = false;
+      this.updateConfig("unienc",false)
+    }else{
+      if(this.logs){
+        console.log("Documents are already decrypted")
+      }
+    }
   }
   async checkForCompression() {
     try {
@@ -190,13 +287,16 @@ class Database {
     					 reject(err)
     				} else {
               if (this.encrypt) {
-                result = dec(result);
+                var decr = dec(result);
+                this.addDoc(id,JSON.parse(decr)).then(()=>{
+                  resolve(result);
+                }).catch(reject)
+              }else{
+                this.addDoc(id,JSON.parse(result)).then(()=>{
+                  resolve(result);
+                }).catch(reject)
               }
-              this.addDoc(id,JSON.parse(result)).then(()=>{
-                result = JSON.parse(result);
-                
-                resolve(result);
-              }).catch(reject)
+              
     				}
     			});
         });
@@ -217,23 +317,17 @@ class Database {
   }
 	addDoc(id, obj) {
 		return new Promise((resolve, reject) => {
-      this.checkForCompression(id).then(comp=>{
-        if(comp){
-          this.decompressDoc(id).then(data=>{
-            if(typeof data !== "object"){
-              data = JSON.parse(data)
-            }
-            
-          })
-        }
-      })
 			let file = path.join(this.dir, id + '.json');
-			let data = JSON.stringify(obj);
+      let data = obj;
+      if(typeof obj !== "string"){
+			 data = JSON.stringify(obj);
+      }
 			if (this.encrypt) {
 				data = enc(data);
 			}
 			fs.writeFile(file, data, (err) => {
 				if (err) {
+          console.log(err);
 					reject(err);
 				} else {
 					resolve(obj);
@@ -372,7 +466,4 @@ class Database {
 			});
 		});
 	}
-}
-module.exports = {
-  Database,
 }
