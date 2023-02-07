@@ -54,6 +54,14 @@ myDB.deleteDoc('document1')
 myDB.dump()
     .then((documents) => console.log(documents))
     .catch((err) => console.error(err));
+
+
+// Encrypt all documents
+myDB.encryptDocs()
+
+
+// Decrypt all documents
+myDB.unencryptDocs()
 ```
 
 # Class `Database`
@@ -98,3 +106,17 @@ Deletes a document from the database.
 ## unencryptDocs
 
 - Completely decrypts database, useful for viewing encrypted data (use at your own risk)
+
+# Speeds
+
+- 166 Kilobytes
+  - (Compressed) 24.475886998698115 milliseconds
+  - (Compressed + encrypted) --- milliseconds
+- 332 Kilobytes
+  - (Compressed) 28.68665700033307 milliseconds
+  - (Compressed + encrypted) 884.8475460037589 milliseconds
+- 829 Kilobytes
+  - (Compressed) 47.736504999920726 milliseconds
+  - (Compressed + encrypted) 966.7856909930706 milliseconds
+- Sample 1 (Small sample data)
+  - (Compressed + encrypted) 17.297598004341125 milliseconds
