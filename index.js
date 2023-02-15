@@ -41,18 +41,20 @@ class Database {
 				returnData[line[0]] = (line[1] === "true") ? true : false
 			});
 			var x = returnData;
-			this.universallyEnc = x.unienc;
-			this.encrypt = x.unienc;
+			this.universallyEnc = x.unienc || this.encrypt;
+			this.encrypt = x.unienc || this.encrypt;
 			if (this.logs) {
 				console.log("Found encrpyt settings in .dbdata.sojs, forcing switch to " + ((this.encrypt) ? "encrypted" : "unencrypted"));
-				console.log(this.encrypt);
+				console.log("Encrypting true|false: "+this.encrypt);
 			}
 		} catch (err) {
 			if (err.message.indexOf("no such").indexOf != -1) {
-				fs.writeFileSync(path.join(this.dir, ".dbdata.sojs"), "=unienc:" + this.encrypt);
+				fs.writeFileSync(path.join(this.dir, ".dbdata.sojs"),"=unienc:"+this.encrypt);
 				this.universallyEnc = this.encrypt;
-        console.warn("Restart the code to fix the following error.");
         console.error(err)
+        if(this.logs){
+          console.log(".dbdata.sojs created, encrypt settings updated: \nencrypted: "+this.encrypt);
+        }
 			} else {
 				console.error(err);
 			}
@@ -478,9 +480,6 @@ class Database {
 		});
 	}
 }
-
-const nndb = new Database("nndb");
-
 module.exports = {
 	Database
 }
